@@ -1,0 +1,181 @@
+#encoding: utf-8
+
+require './Block'
+
+# Klasse zum Darstellen von Sudokus. Erbt von Block, da viele Funktionen von dort gebraucht werden.
+class Sudoku < Block
+
+	# Erstellt ein Sudoku. Eingabe muss ein String von 81 kommaseparierten Zahlen als Strings sein.
+	# Wenn eine Zelle leer ist, muss "0" angegeben werden. Andere mögliche Eingabe: leeres Sudoku (leerer String)
+	def initialize sudoku_string
+		unless sudoku_string.strip =~ /^(\d,){80}\d$/ || sudoku_string == ""
+			abort "Eingabe ist kein Sudoku!"
+		end
+
+		length = 9
+		
+		# Initialisiert Reihen-, Spalte-, Elemente- und Blöcke-Array (Blöcke-Array beinhaltet Objekte vom Typ Block)
+		@elements = Array.new length ** 2
+		@rows = init_2dim_array length
+		@cols = init_2dim_array length
+
+		@blocks = []
+		(0...length).each do |i|
+			@blocks[i] = Block.new
+		end
+		
+		# Fügt die Zahlen in das Sudoku ein
+		i = 0
+		sudoku_string.strip.each_char do |char|
+			if char == ","
+				i += 1
+			else
+				block_number = get_block_number_from_cell i
+				block_row = i / 9 % 3
+				block_col = i % 3
+				
+				@blocks[block_number].put_elem block_row, block_col, char
+				c = @blocks[block_number].elem block_row, block_col
+				@elements[i] = c
+				@rows[i / 9][i % 9] = c
+				@cols[i % 9][i / 9] = c
+			end
+		end
+
+		# Falls leeres Sudoku, füge in Reihen-, Spalten- und Elemente-Array auch Nullen ein
+		# (Referenzen auf dieselben Objekte wie im Blöcke-Array)
+		if sudoku_string == ""
+			(0...length ** 2).each do |i|
+				c = @blocks[get_block_number_from_cell i].elem (i / 9 % 3), (i % 3)
+				@elements[i] = c
+				@rows[i / 9][i % 9] = c
+				@cols[i % 9][i / 9] = c
+			end
+		end
+=begin		
+		# Testausgabe, die noch gelöscht werden muss
+		cell = i
+		puts @blocks[cell / 27 * 3 + cell % 9 / 3].elem(cell / 9 % 3, cell % 3).object_id
+		puts @rows[cell / 9][cell % 9].object_id
+		puts @cols[cell % 9][cell / 9].object_id
+		puts @elements[i].object_id
+=end
+	end
+	
+	# Gibt Blocknummer zur Zelle (Angabe von Koordinaten) aus
+	def get_block_number row, col
+		return row / 3 * 3 + col / 3
+	end
+
+	# Gibt Blocknummer zur Zelle aus
+	def get_block_number_from_cell cell
+		return cell / 27 * 3 + cell % 9 / 3
+	end
+
+	# Prüft, ob Zahl in Reihe vorkommt
+	def include_in_row? row, number
+		return @rows[row].include? number.to_s
+	end
+	
+	# Prüft, ob Zahl in Spalte vorkommt
+	def include_in_col? col, number
+		return @cols[col].include? number.to_s
+	end
+
+	# Prüft, ob Zahl in Block vorkommt
+	def include_in_block? block, number
+		return @blocks[block].include? number
+	end
+
+	# Prüft, ob Zahl in Zelle vorkommt
+	def include_in_cell? row, col, number
+		return @rows[row][col] == number.to_s
+	end
+	
+	# Fügt Zahl in Zelle ein (Angabe von Zellennummer (von links nach rechts und von oben nach unten)
+	def put_elem_in_cell cell, neuer_wert
+		@elements[cell].replace neuer_wert.to_s
+	end
+
+	# Gibt Zahl aus Zelle aus
+	def get_elem_from_cell cell
+		return @elements[cell]
+	end
+
+	# Fügt Element in Sudoku ein (Angabe von Koordinaten der Zelle)
+	def put_elem row, col, neuer_wert
+		@rows[row][col].replace neuer_wert.to_s
+	end
+
+	# Prüft, ob Zelle leer ist
+	def cell_is_empty? cell
+		return @elements[cell] == "0"
+	end
+	
+	# Prüft, ob Zelle (Angabe der Koordinaten) leer ist
+	def empty? row, col
+		return @rows[row][col] == "0"
+	end
+
+	# Gibt Zellen aus, die für angegebene Zahl möglich ist
+	def possible_cells number
+		# Erstellt Tempobjekt, in dem die nicht möglichen Stellen mit "10" markiert sind
+		tmp = Sudoku.new ""
+		
+		# Trage nicht mögliche Stellen in Tempobjekt ein
+		(0...9 ** 2).each do |i|
+			if !cell_is_empty?(i)
+				tmp.put_elem_in_cell i, 10
+			elsif @rows[i / 9].include? number.to_s
+				tmp.put_elem_in_cell i, 10
+			elsif @cols[i % 9].include? number.to_s
+				tmp.put_elem_in_cell i, 10
+			elsif @blocks[get_block_number_from_cell i].include? number
+				tmp.put_elem_in_cell i, 10
+			end
+		end
+
+		# mögliche Stellen
+		possible_cells = (0...9 ** 2).select { |i| tmp.get_elem_from_cell(i) == "0" }
+		return possible_cells
+	end
+
+	# Gibt mögliche Zahlen für die Zelle (Angabe der Koordinaten) aus
+	def possible_numbers row, col
+
+		# Wenn Zelle nicht leer ist, gibt es keine möglichen Zahlen
+		if !empty?(row, col)
+			return []
+		end
+
+		possible_numbers = *(1..9)
+		
+		# Prüfe, welche Zahlen nicht möglich sind
+		cell = row * 9 + col
+		(1..9).each do |i|
+			if @rows[row].include? i.to_s
+				possible_numbers.delete i
+			elsif @cols[col].include? i.to_s
+				possible_numbers.delete i
+			elsif @blocks[get_block_number row, col].include? i
+				possible_numbers.delete i
+			end
+		end
+
+		return possible_numbers
+	end
+
+	# Gibt mögliche Zahlen für die Zelle aus
+	def possible_numbers_for_cell cell
+		possible_numbers (cell / 9), (cell % 9)
+	end
+	
+	# Testfunktion, die noch entfernt werden muss. Gibt Object-Id einer Zellen aus (zum Überprüfen,
+	# ob in den einzelnen Arrays dasselbe Objekt verwendet wird).
+	def test_object_id cell
+		puts "Block: Object_id " << @blocks[cell / 27 * 3 + cell % 9 / 3].elem(cell / 9 % 3, cell % 3).object_id.to_s
+		puts "Reihe: Object_id " << @rows[cell / 9][cell % 9].object_id.to_s
+		puts "Spalte: Object_id " << @cols[cell % 9][cell / 9].object_id.to_s
+		puts "Zelle: Object_id " << @elements[cell].object_id.to_s
+	end
+end
