@@ -73,12 +73,12 @@ class Block
 
 	# Gibt Anzahl der freien Zellen aus
 	def count_free_cells
-		return @elements.select { |v| v != "0" }.size
+		return @elements.grep('0').size
 	end
 
 	# Gibt Anzahl der belegten Zellen aus
 	def size
-		return @elements.grep('0').size
+		return @elements.select { |v| v != "0" }.size
 	end
 	
 	# Testfunktion
