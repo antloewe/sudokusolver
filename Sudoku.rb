@@ -120,23 +120,15 @@ class Sudoku < Block
 	# Gibt Zellen aus, die für angegebene Zahl möglich ist
 	def possible_cells number
 		# Erstellt Tempobjekt, in dem die nicht möglichen Stellen mit "10" markiert sind
-		tmp = Sudoku.new ""
+		possible_cells = []
 		
 		# Trage nicht mögliche Stellen in Tempobjekt ein
-		(0...9 ** 2).each do |i|
-			if !cell_is_empty?(i)
-				tmp.put_elem_in_cell i, 10
-			elsif @rows[i / 9].include? number.to_s
-				tmp.put_elem_in_cell i, 10
-			elsif @cols[i % 9].include? number.to_s
-				tmp.put_elem_in_cell i, 10
-			elsif @blocks[get_block_number_from_cell i].include? number
-				tmp.put_elem_in_cell i, 10
-			end
+		(0...9 ** 2).select { |i| cell_is_empty?(i) && !@rows[i / 9].include?(number.to_s) && !@cols[i % 9].include?(number.to_s) && !@blocks[get_block_number_from_cell i].include?(number) }.each do |i|
+				
+			possible_cells << i
 		end
 
 		# mögliche Stellen
-		possible_cells = (0...9 ** 2).select { |i| tmp.get_elem_from_cell(i) == "0" }
 		return possible_cells
 	end
 
