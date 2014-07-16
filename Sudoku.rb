@@ -18,6 +18,7 @@ class Sudoku < Block
 		@elements = Array.new length ** 2
 		@rows = init_2dim_array length
 		@cols = init_2dim_array length
+		@candidates = Array.new length ** 2
 
 		@blocks = []
 		(0...length).each do |i|
@@ -51,6 +52,10 @@ class Sudoku < Block
 				@rows[i / 9][i % 9] = c
 				@cols[i % 9][i / 9] = c
 			end
+		end
+
+		(0...length ** 2).each do |i|
+			@candidates[i] = candidates_for_cell i	
 		end
 =begin		
 		# Testausgabe, die noch gelöscht werden muss
@@ -117,12 +122,16 @@ class Sudoku < Block
 		return @rows[row][col] == "0"
 	end
 
+	# Gibt Kandidatenarray aus
+	def get_candidates_for_sudoku
+		return @candidates
+	end
+
 	# Gibt Zellen aus, die für angegebene Zahl möglich ist
 	def possible_cells number
-		# Erstellt Tempobjekt, in dem die nicht möglichen Stellen mit "10" markiert sind
 		possible_cells = []
 		
-		# Trage nicht mögliche Stellen in Tempobjekt ein
+		# Trage nicht mögliche Stellen ein
 		(0...9 ** 2).select { |i| cell_is_empty?(i) && !@rows[i / 9].include?(number.to_s) && !@cols[i % 9].include?(number.to_s) && !@blocks[get_block_number_from_cell i].include?(number) }.each do |i|
 				
 			possible_cells << i
@@ -133,7 +142,7 @@ class Sudoku < Block
 	end
 
 	# Gibt mögliche Zahlen für die Zelle (Angabe der Koordinaten) aus
-	def possible_numbers row, col
+	def candidates row, col
 
 		# Wenn Zelle nicht leer ist, gibt es keine möglichen Zahlen
 		if !empty?(row, col)
@@ -158,10 +167,137 @@ class Sudoku < Block
 	end
 
 	# Gibt mögliche Zahlen für die Zelle aus
-	def possible_numbers_for_cell cell
-		possible_numbers (cell / 9), (cell % 9)
+	def candidates_for_cell cell
+		candidates (cell / 9), (cell % 9)
+	end
+
+	# Gibt die letzte mögliche Zahl aus
+	def last_digit row, col
+		return last_digit_for_cell (row * 9 + col)
+	end
+
+	# Gibt die letzte mögliche Zahl für eine Zelle aus
+	def last_digit_for_cell cell
+		return @candidates[cell].length == 1 ? @candidates[cell][0].to_i : false
+	end
+
+	# Gibt Häuserzellen aus
+	def get_house_cells row, col
+		house_cells = get_row_cells(row, col) + get_col_cells(row, col) + get_block_cells(row, col)
+		return house_cells.uniq!
+	end
+
+	# Gibt Häuserzellen aus
+	def get_house_cells_from_cell cell
+		get_house_cells (cell / 9), (cell % 9)
+	end
+
+	# Gibt Zellen der Reihe aus
+	def get_row_cells row, col
+		row_cells = []
+		(row * 9...row * 9 + 9).each do |i|
+			row_cells << i
+		end
+		return row_cells
+	end
+
+	# Gibt Zellen der Reihe aus
+	def get_row_cells_from_cell
+		get_row_cells (cell / 9), (cell % 9)
+	end
+
+	# Gibt Zellen der Reihe (ohne angegebene) aus
+	def get_other_row_cells row, col
+		return get_row_cells(row, col) - [row * 9 + col]
+	end
+
+	# Gibt Zellen der Reihe (ohne angegebene) aus
+	def get_other_row_cells_from_cell cell
+		return get_row_cells_from_cell - [cell]
 	end
 	
+	# Gibt Zellen der Spalte aus
+	def get_col_cells row, col
+		col_cells = []
+		(0...9).each do |i|
+			col_cells << i * 9 + col
+		end
+		return col_cells
+	end
+
+	# Gibt Zellen der Spalte aus
+	def get_col_cells_from_cell cell
+		get_col_cells (cell / 9), (cell % 9)
+	end
+
+	# Gibt Zellen der Spalte (ohne angegebene) aus
+	def get_other_col_cells row, col
+		return get_col_cells(row, col) - [row * 9 + col]
+	end
+
+	# Gibt Zellen der Spalte (ohne angegebene) aus
+	def get_other_col_cells_from_cells cell
+		return get_col_cells_from_cell(cell) - [cell]
+	end
+
+	# Gibt Zellen des Blocks aus
+	def get_block_cells row, col
+		block_cells = []
+		block_number = get_block_number row, col
+		(row / 3 * 3...row / 3 * 3 + 3).each do |r|
+			(col / 3 * 3...col / 3 * 3 + 3).each do |c|
+				block_cells << r * 9 + c
+			end
+		end
+		return block_cells
+	end
+
+	# Gibt Zellen des Blocks aus
+	def get_block_cells_from_cell cell
+		get_block_cells (cell / 9), (cell % 9)
+	end
+
+	# Gibt Zellen des Blocks (ohne angegebene) aus
+	def get_other_block_cells row, col
+		return get_block_cells(row, col) - [row * 9 + col]
+	end
+
+	# Gibt Zellen des Blocks (ohne angegebene) aus
+	def get_other_block_cells_from_cell cell
+		return get_block_cells_from_cell(cell) - [cell]
+	end
+
+	# Hidden Single
+	def hidden_single row, col
+		#a = false
+		@candidates[row * 9 + col].each do |candidate|
+			puts "row: " << (get_other_row_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s 
+			puts "col: " << (get_other_col_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s
+			puts "block: " << (get_other_block_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s
+				
+
+			if get_other_row_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty? \
+				|| get_other_col_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty? \
+				|| get_other_block_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?
+				
+				return candidate.to_i
+			end
+		end
+		return false
+	end
+
+				
+
+=begin
+			unless (row * 9...row * 9 + col).select { |i| !@candidates[i].empty? || @candidates[i].include? candidate }.empty? \
+				&& (row * 9 + col...row * 9 + 9).select { |i| !@candidate[i].empty? || @candidates[i].include? candidate }.empty? \
+				|| (col * 
+				next
+			end
+			unless (
+				next
+	end
+=end
 	# Testfunktion, die noch entfernt werden muss. Gibt Object-Id einer Zellen aus (zum Überprüfen,
 	# ob in den einzelnen Arrays dasselbe Objekt verwendet wird).
 	def test_object_id cell

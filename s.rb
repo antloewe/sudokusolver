@@ -39,8 +39,25 @@ s.test_object_id 80
 
 s2 = Sudoku.new '5,6,0,0,0,0,0,0,0,0,0,0,0,0,4,6,0,0,0,0,0,7,5,0,2,3,0,8,5,3,0,1,0,0,6,0,6,0,0,0,3,2,9,0,0,0,0,9,0,0,0,1,0,0,3,0,7,1,0,8,0,0,0,0,1,0,0,0,3,0,0,7,0,0,6,0,7,9,0,0,1'
 #puts s2.possible_cells(3)
-puts s2.possible_numbers 8, 6
-puts s2.possible_numbers_for_cell 78
+#puts s2.candidates 8, 6
+#puts s2.candidates_for_cell 78
+#puts "get elem: " << s2.elem(8, 5)
+puts s2.get_candidates_for_sudoku.inspect
+#puts s2.last_digit 0, 32
+#puts s2.get_house_cells_from_cell(0).inspect
+
+=begin
+(2...4).each do |r|
+	(0...9).each do |c|
+		puts s2.hidden_single(r, c)
+		puts "\n"
+	end
+end
+=end
+
+puts s2.get_col_cells(4,4).inspect
+puts s2.get_other_col_cells(4,4).inspect
+#puts s2.get_row_cells(5, 4).inspect
 #puts s2.get_elem_from_cell(80)
 #puts s2.get_block_number_from_cell 47
 =begin
