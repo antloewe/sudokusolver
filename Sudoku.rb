@@ -209,7 +209,7 @@ class Sudoku < Block
 	end
 
 	# Gibt Häuserzellen aus (ohne angegebene)
-	def get_other_house_cells_from_Cell cell
+	def get_other_house_cells_from_cell cell
 		return get_house_cells_from_cell - [cell]
 	end
 
