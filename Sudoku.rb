@@ -172,12 +172,12 @@ class Sudoku < Block
 	end
 
 	# Gibt die letzte mögliche Zahl aus
-	def last_digit row, col
-		return last_digit_for_cell (row * 9 + col)
+	def naked_single row, col
+		return naked_single_for_cell (row * 9 + col)
 	end
 
 	# Gibt die letzte mögliche Zahl für eine Zelle aus
-	def last_digit_for_cell cell
+	def naked_single_for_cell cell
 		return @candidates[cell].length == 1 ? @candidates[cell][0].to_i : false
 	end
 
@@ -271,9 +271,9 @@ class Sudoku < Block
 	def hidden_single row, col
 		#a = false
 		@candidates[row * 9 + col].each do |candidate|
-			puts "row: " << (get_other_row_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s 
-			puts "col: " << (get_other_col_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s
-			puts "block: " << (get_other_block_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s
+			#puts "row: " << (get_other_row_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s 
+			#puts "col: " << (get_other_col_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s
+			#puts "block: " << (get_other_block_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s
 				
 
 			if get_other_row_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty? \
