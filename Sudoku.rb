@@ -99,7 +99,7 @@ class Sudoku < Block
 	
 	# Fügt Zahl in Zelle ein (Angabe von Zellennummer (von links nach rechts und von oben nach unten)
 	def put_elem_in_cell cell, neuer_wert
-		@elements[cell].replace neuer_wert.to_s
+		put_elem (cell / 9), (cell % 9), neuer_wert
 	end
 
 	# Gibt Zahl aus Zelle aus
@@ -110,6 +110,17 @@ class Sudoku < Block
 	# Fügt Element in Sudoku ein (Angabe von Koordinaten der Zelle)
 	def put_elem row, col, neuer_wert
 		@rows[row][col].replace neuer_wert.to_s
+		# Entferne neuen Wert aus Zellen des Kandidatenarrays in selber Zeile, Spalte und selbem Block
+		@candidates[row * 9 + col] = []
+		get_other_house_cells(row, col).each do |i|
+			@candidates[i].delete neuer_wert
+		end
+		get_other_row_cells(row, col).each do |i|
+			@candidates[i].delete neuer_wert
+		end
+		get_other_col_cells(row, col).each do |i|
+			@candidates[i].delete neuer_wert
+		end
 	end
 
 	# Prüft, ob Zelle leer ist
@@ -190,6 +201,16 @@ class Sudoku < Block
 	# Gibt Häuserzellen aus
 	def get_house_cells_from_cell cell
 		get_house_cells (cell / 9), (cell % 9)
+	end
+
+	# Gibt Häuserzellen aus (ohne angegebene)
+	def get_other_house_cells row, col
+		return get_house_cells(row, col) - [row * 9 + col]
+	end
+
+	# Gibt Häuserzellen aus (ohne angegebene)
+	def get_other_house_cells_from_Cell cell
+		return get_house_cells_from_cell - [cell]
 	end
 
 	# Gibt Zellen der Reihe aus
@@ -279,6 +300,21 @@ class Sudoku < Block
 			end
 		end
 		return false
+	end
+
+	# Hidden Single aus Zelle
+	def hidden_single_from_cell cell
+		hidden_single (cell / 9), (cell % 9)
+	end
+
+	def solve 
+		# 1: Hidden Singles
+		(0...9 ** 2).each do |i|
+			hs = hidden_single_from_cell i
+			if hs != false
+				put_elem_in_cell i, hs
+			end
+		end
 	end
 
 	# Testfunktion, die noch entfernt werden muss. Gibt Object-Id einer Zellen aus (zum Überprüfen,
