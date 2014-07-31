@@ -271,11 +271,6 @@ class Sudoku < Block
 	def hidden_single row, col
 		#a = false
 		@candidates[row * 9 + col].each do |candidate|
-			#puts "row: " << (get_other_row_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s 
-			#puts "col: " << (get_other_col_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s
-			#puts "block: " << (get_other_block_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?).to_s
-				
-
 			if get_other_row_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty? \
 				|| get_other_col_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty? \
 				|| get_other_block_cells(row, col).select { |i| !@candidates[i].empty? && @candidates[i].include?(candidate) }.empty?
@@ -286,18 +281,6 @@ class Sudoku < Block
 		return false
 	end
 
-				
-
-=begin
-			unless (row * 9...row * 9 + col).select { |i| !@candidates[i].empty? || @candidates[i].include? candidate }.empty? \
-				&& (row * 9 + col...row * 9 + 9).select { |i| !@candidate[i].empty? || @candidates[i].include? candidate }.empty? \
-				|| (col * 
-				next
-			end
-			unless (
-				next
-	end
-=end
 	# Testfunktion, die noch entfernt werden muss. Gibt Object-Id einer Zellen aus (zum Überprüfen,
 	# ob in den einzelnen Arrays dasselbe Objekt verwendet wird).
 	def test_object_id cell
