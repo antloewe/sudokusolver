@@ -115,12 +115,6 @@ class Sudoku < Block
 		get_other_house_cells(row, col).each do |i|
 			@candidates[i].delete neuer_wert
 		end
-		get_other_row_cells(row, col).each do |i|
-			@candidates[i].delete neuer_wert
-		end
-		get_other_col_cells(row, col).each do |i|
-			@candidates[i].delete neuer_wert
-		end
 	end
 
 	# Prüft, ob Zelle leer ist
