@@ -227,6 +227,11 @@ class Sudoku < Block
 		get_row_cells (cell / 9), (cell % 9)
 	end
 
+	# Gibt Zellen der Reihe aus
+	def get_row_cells_from_row row
+		get_row_cells row, 0
+	end
+
 	# Gibt Zellen der Reihe (ohne angegebene) aus
 	def get_other_row_cells row, col
 		return get_row_cells(row, col) - [row * 9 + col]
@@ -251,13 +256,18 @@ class Sudoku < Block
 		get_col_cells (cell / 9), (cell % 9)
 	end
 
+	# Gibt Zellen der Spalte aus
+	def get_col_cells_from_col col
+		get_col_cells 0, col
+	end
+
 	# Gibt Zellen der Spalte (ohne angegebene) aus
 	def get_other_col_cells row, col
 		return get_col_cells(row, col) - [row * 9 + col]
 	end
 
 	# Gibt Zellen der Spalte (ohne angegebene) aus
-	def get_other_col_cells_from_cells cell
+	def get_other_col_cells_from_cell cell
 		return get_col_cells_from_cell(cell) - [cell]
 	end
 
@@ -276,6 +286,11 @@ class Sudoku < Block
 	# Gibt Zellen des Blocks aus
 	def get_block_cells_from_cell cell
 		get_block_cells (cell / 9), (cell % 9)
+	end
+
+	# Gibt Zellen des Blocks aus
+	def get_block_cells_from_block block
+		get_block_cells (block / 3 * 3), (block % 3 * 3)
 	end
 
 	# Gibt Zellen des Blocks (ohne angegebene) aus
@@ -309,11 +324,18 @@ class Sudoku < Block
 
 	# Locked Candidates Type 1
 	def locked_candidates_1 row, col, number
-		block_cells = get_block_cells row, col
+		locked_candidates_1_from_block get_block_number(row, col), number
+	end
+
+	# Locked Candidates Type 1
+	def locked_candidates_1_from_block block, number
+		block_cells = get_block_cells_from_block block
 		block_cells_with_number = block_cells.select { |i| @candidates[i].include?(number) }
 		
+		return_bool = false
+
 		if block_cells_with_number.empty?
-			return false
+			return return_bool
 		end
 
 		block_cell_rows = block_cells_with_number.map { |i| i / 9 }
@@ -321,10 +343,12 @@ class Sudoku < Block
 		only_in_row = block_cell_rows.count(block_cell_rows[0]) == block_cell_rows.length ? true : false
 
 		if only_in_row
+			number_of_deleted_items = 0
 			get_other_row_cells_from_cell(block_cells_with_number[0]).select { |i| !block_cells_with_number.include?(i) }.each do |i|
-				@candidates[i].delete number
+				deleted_item = @candidates[i].delete number
+				number_of_deleted_items += 1 if !deleted_item.nil?
 			end
-			return true
+			return_bool = true if number_of_deleted_items > 0
 		end
 
 		block_cell_cols = block_cells_with_number.map { |i| i % 9 }
@@ -332,12 +356,62 @@ class Sudoku < Block
 		only_in_col = block_cell_cols.count(block_cell_cols[0]) == block_cell_cols.length ? true : false
 		
 		if only_in_col
+			number_of_deleted_items = 0
 			get_other_col_cells_from_cell(block_cells_with_number[0]).select { |i| !block_cells_with_number.include?(i) }.each do |i|
-				@candidates[i].delete number
+				deleted_item = @candidates[i].delete number
+				number_of_deleted_items += 1 if !deleted_item.nil?
 			end
-			return true
+			return_bool = true if number_of_deleted_items > 0
 		end
 		
+		return return_bool
+	end
+
+	# Locked Candidates Type 2
+	def locked_candidates_2_from_row row, number
+		row_cells = get_row_cells_from_row row
+		row_cells_with_number = row_cells.select { |i| @candidates[i].include?(number) }
+		if row_cells_with_number.empty?
+			return false
+		end
+
+		row_cell_blocks = row_cells_with_number.map { |i| get_block_number_from_cell i }
+
+		only_in_block = row_cell_blocks.count(row_cell_blocks[0]) == row_cell_blocks.length ? true : false
+
+		if only_in_block
+			number_of_deleted_items = 0
+			get_block_cells_from_block(row_cell_blocks[0]).select { |i| !row_cells_with_number.include?(i) }.each do |i|
+				deleted_item = @candidates[i].delete number
+				number_of_deleted_items += 1 if !deleted_item.nil?
+			end
+			return true if number_of_deleted_items > 0
+		end
+
+		return false	
+	end
+
+	# Locked Candidates Type 2 aus Spalte
+	def locked_candidates_2_from_col col, number
+		col_cells = get_col_cells_from_col col
+		col_cells_with_number = col_cells.select { |i| @candidates[i].include?(number) }
+		if col_cells_with_number.empty?
+			return false
+		end
+
+		col_cell_blocks = col_cells_with_number.map { |i| get_block_number_from_cell i }
+
+		only_in_block = col_cell_blocks.count(col_cell_blocks[0]) == col_cell_blocks.length ? true : false
+
+		if only_in_block
+			number_of_deleted_items = 0
+			get_block_cells_from_block(col_cell_blocks[0]).select { |i| !col_cells_with_number.include?(i) }.each do |i|
+				deleted_item = @candidates[i].delete number
+				number_of_deleted_items += 1 if !deleted_item.nil?
+			end
+			return true if number_of_deleted_items > 0
+		end
+
 		return false
 	end
 
@@ -347,6 +421,37 @@ class Sudoku < Block
 			hs = hidden_single_from_cell i
 			if hs != false
 				put_elem_in_cell i, hs
+				puts "Hidden Single in Zelle " << i.to_s << ", Zahl " << hs.to_s
+			end
+		end
+		
+		# 2: Locked Candidates Type 1
+		(0...9).each do |b|
+			(1..9).each do |i|
+				lc1 = locked_candidates_1_from_block b, i
+				if lc1 != false
+					puts "Locked Candidates Type 1 in Block " << b.to_s << ", Zahl " << i.to_s
+				end
+			end
+		end
+		
+		# 3: Locked Candidates Type 2: Reihen
+		(0...9).each do |r|
+			(1..9).each do |i|
+				lc2 = locked_candidates_2_from_row r, i
+				if lc2 != false
+					puts "Locked Candidates Type 2 in Reihe " << r.to_s << ", Zahl " << i.to_s
+				end
+			end
+		end
+
+		# 4: Locked Candidates Type 2: Spalten
+		(0...9).each do |c|
+			(1..9).each do |i|
+				lc2 = locked_candidates_2_from_col c, i
+				if lc2 != false
+					puts "Locked Candidates Type 2 in Spalte " << c.to_s << ", Zahl " << i.to_s
+				end
 			end
 		end
 	end
