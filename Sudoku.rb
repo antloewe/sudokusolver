@@ -223,7 +223,7 @@ class Sudoku < Block
 	end
 
 	# Gibt Zellen der Reihe aus
-	def get_row_cells_from_cell
+	def get_row_cells_from_cell cell
 		get_row_cells (cell / 9), (cell % 9)
 	end
 
@@ -234,7 +234,7 @@ class Sudoku < Block
 
 	# Gibt Zellen der Reihe (ohne angegebene) aus
 	def get_other_row_cells_from_cell cell
-		return get_row_cells_from_cell - [cell]
+		return get_row_cells_from_cell(cell) - [cell]
 	end
 	
 	# Gibt Zellen der Spalte aus
@@ -305,6 +305,40 @@ class Sudoku < Block
 	# Hidden Single aus Zelle
 	def hidden_single_from_cell cell
 		hidden_single (cell / 9), (cell % 9)
+	end
+
+	# Locked Candidates Type 1
+	def locked_candidates_1 row, col, number
+		block_cells = get_block_cells row, col
+		block_cells_with_number = block_cells.select { |i| @candidates[i].include?(number) }
+		
+		if block_cells_with_number.empty?
+			return false
+		end
+
+		block_cell_rows = block_cells_with_number.map { |i| i / 9 }
+		
+		only_in_row = block_cell_rows.count(block_cell_rows[0]) == block_cell_rows.length ? true : false
+
+		if only_in_row
+			get_other_row_cells_from_cell(block_cells_with_number[0]).select { |i| !block_cells_with_number.include?(i) }.each do |i|
+				@candidates[i].delete number
+			end
+			return true
+		end
+
+		block_cell_cols = block_cells_with_number.map { |i| i % 9 }
+
+		only_in_col = block_cell_cols.count(block_cell_cols[0]) == block_cell_cols.length ? true : false
+		
+		if only_in_col
+			get_other_col_cells_from_cell(block_cells_with_number[0]).select { |i| !block_cells_with_number.include?(i) }.each do |i|
+				@candidates[i].delete number
+			end
+			return true
+		end
+		
+		return false
 	end
 
 	def solve 
