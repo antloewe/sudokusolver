@@ -409,6 +409,46 @@ class Sudoku < Block
 		return false
 	end
 
+	# Hidden Tuple aus Block
+	def hidden_tuple_from_block block, type
+		hidden_tuple get_block_cells_from_block(block), type
+	end
+
+	# Hidden Tuple aus Reihe
+	def hidden_tuple_from_row row, type
+		hidden_tuple get_row_cells_from_row(row), type
+	end
+
+	# Hidden Tuple aus Spalte
+	def hidden_tuple_from_col col, type
+		hidden_tuple get_col_cells_from_col(col), type
+	end
+
+	# Funktion für die Berechnung eines Hidden Tuple
+	def hidden_tuple cells, type
+		number_of_filled_cells = cells.select { |c| @candidates[c].empty? }.length
+		combinations = cells.combination(type).select { |c| c.select { |i| !@candidates[i].empty? }.length == type }
+
+		combinations.each do |i|
+			union = Array.new
+			cells.select { |j| !i.include?(j) && !@candidates[j].empty? }.each do |k|
+				union |= @candidates[k]
+			end
+			
+			if union.length == 9 - type - number_of_filled_cells
+				i.each do |j|
+					@candidates[j] -= union
+					#puts "kandidaten für " << j.to_s << ": " << @candidates[j].to_s
+				end
+				return true
+			end
+			
+		end
+		return false
+	end
+
+	private :hidden_tuple
+
 	def solve 
 		# 1: Hidden Singles
 		(0...9 ** 2).each do |i|
@@ -448,6 +488,29 @@ class Sudoku < Block
 				end
 			end
 		end
+
+		# 5 Hidden Tuples
+		(0...9).each do |i|
+			(2..4).each do |j|
+				ht = hidden_tuple_from_block i, j
+				if ht != false
+					puts "Hidden " << j.to_s << "-Tuple in Block " << i.to_s
+				end
+				ht = hidden_tuple_from_row i, j
+				if ht != false
+					puts "Hidden " << j.to_s << "-Tuple in Reihe " << i.to_s
+				end
+				ht = hidden_tuple_from_col i, j
+				if ht != false
+					puts "Hidden " << j.to_s << "-Tuple in Block " << i.to_s
+				end
+			end
+		end
+	end
+
+	# Gibt Sudoku aus
+	def get_sudoku
+		puts @elements.to_s
 	end
 
 	# Testfunktion, die noch entfernt werden muss. Gibt Object-Id einer Zellen aus (zum Überprüfen,
@@ -458,4 +521,5 @@ class Sudoku < Block
 		puts "Spalte: Object_id " << @cols[cell % 9][cell / 9].object_id.to_s
 		puts "Zelle: Object_id " << @elements[cell].object_id.to_s
 	end
+
 end
