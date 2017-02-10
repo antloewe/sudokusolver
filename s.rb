@@ -54,7 +54,7 @@ s4 = Sudoku.new '7,6,2,0,0,8,0,0,1,9,8,0,0,0,0,0,0,6,1,5,0,0,0,0,0,8,7,4,7,8,0,0
 s2.solve
 s2.solve
 s2.solve
-puts s2.get_candidates_for_sudoku.inspect
+puts s2.get_candidates.inspect
 s2.get_sudoku
 #puts s2.last_digit 0, 32
 #puts s2.get_house_cells_from_cell(0).inspect
