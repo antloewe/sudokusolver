@@ -38,7 +38,7 @@ class Sudoku
 			@candidates[i] = candidates i
 		end
 	end
-	
+
 	# Fügt Zahl in Zelle ein (Angabe von Zellennummer (von links nach rechts und von oben nach unten)
 	def put_elem cell, neuer_wert
 		@elements[cell] = neuer_wert
@@ -299,6 +299,43 @@ class Sudoku
 		return false
 	end
 
+	# Naked Tuple aus Block
+	def naked_tuple_from_block block, type
+		naked_tuple get_block_cells(block), type
+	end
+
+	# Naked Tuple aus Reihe
+	def naked_tuple_from_row row, type
+		naked_tuple get_row_cells(row), type
+	end
+
+	# Naked Tuple aus Block
+	def naked_tuple_from_col col, type
+		naked_tuple get_col_cells(col), type
+	end
+
+	# Funktion für die Berechnung eines Naked Tuple
+	def naked_tuple cells, type
+		combinations = cells.reject { |i| @candidates[i].empty? }.combination(type)
+
+		combinations.each do |i|
+			union = []
+			i.each do |j|
+				union += @candidates[j]
+			end
+			union.uniq!
+			if union.length <= type
+				tmp = cells - i
+				tmp.each do |k|
+					@candidates[k] -= union
+				end
+				return true
+			end
+				
+		end
+		return false
+	end
+
 	private :hidden_tuple
 
 	def solve
@@ -363,8 +400,27 @@ class Sudoku
 				end
 				ht = hidden_tuple_from_col i, j
 				if ht != false
-					puts "Hidden " << j.to_s << "-Tuple in Block " << i.to_s
+					puts "Hidden " << j.to_s << "-Tuple in Spalte " << i.to_s
 				end
+			end
+		end
+
+		# 7 Naked Tuples
+		(0...9).each do |i|
+			(2..4).each do |j|
+				nt = naked_tuple_from_block i, j
+				if nt != false
+					puts "Naked " << j.to_s << "-Tuple in Block " << i.to_s
+				end
+				nt = naked_tuple_from_row i, j
+				if nt != false
+					puts "Naked " << j.to_s << "-Tuple in Reihe " << i.to_s
+				end
+				nt = naked_tuple_from_col i, j
+				if nt != false
+					puts "Naked " << j.to_s << "-Tuple in Spalte " << i.to_s
+				end
+
 			end
 		end
 	end
